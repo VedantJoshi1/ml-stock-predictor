@@ -1,32 +1,25 @@
 # 📈 Machine Learning Stock Predictor
 
-An end-to-end machine learning application that predicts the **next-day direction** (up or down) of a stock using historical market data and technical indicators.
+An end-to-end machine learning project that predicts **next-day stock direction** and ranks stocks using **confidence-weighted expected returns**.
 
-Built with **Python**, **scikit-learn**, and **real financial data**.  
-Designed as a practical ML project for learning, experimentation, and portfolio demonstration.
-
-> ⚠️ Disclaimer: This project is for educational purposes only and is **not financial advice**.
+Built with Python and scikit-learn using real historical market data.  
+Designed as a **research tool**, **signal input**, and **ML portfolio project** — not financial advice.
 
 ---
 
-## ⚡ Quick Start (Terminal Commands)
+## ⚠️ Disclaimer
 
-```powershell
-# Activate virtual environment (Windows)
-cd C:\Projects\ml-stock-predictor
-.\venv\Scripts\Activate.ps1
+This project is for **educational and research purposes only**.  
+It is **not financial advice** and should not be used as the sole basis for trading decisions.
 
-# Install dependencies
-pip install -r requirements.txt
+---
 
-# Train a model for a stock
-python src/train.py AAPL
+## 🧠 What This Project Does
 
-# Predict tomorrow's direction for a stock
-python src/predict.py AAPL
+For each stock:
+- Predicts **UP or DOWN** for the next trading day
+- Outputs **model confidence**
+- Estimates **expected return on UP days**
+- Ranks stocks using a **signal score**
 
-# Predict multiple stocks at once
-python src/predict_multiple.py
-
-# Add a new ticker (example)
-python src/predict.py NVDA
+### Signal Score Formula
