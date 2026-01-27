@@ -1,54 +1,69 @@
 import sys
 import joblib
 import numpy as np
+
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import precision_score
 
 from data_loader import load_data
 from features import create_features
 
-def train_model(ticker):
+FEATURES = ["Return", "MA_5", "MA_20", "MA_50", "Volatility", "Bull_Regime"]
+
+def train_ticker(ticker):
+    print(f"Training model for {ticker}...")
+
     df = load_data(ticker)
     df = create_features(df)
 
-    features = ["Return", "MA_5", "MA_20", "Volatility"]
-    X = df[features]
-    y = df["Target"]
+    models = {}
 
-    split = int(len(df) * 0.8)
-    X_train, X_test = X[:split], X[split:]
-    y_train, y_test = y[:split], y[split:]
+    for horizon, target in {
+        "1d": "Target_1d",
+        "30d": "Target_30d",
+        "90d": "Target_90d",
+    }.items():
 
-    model = RandomForestClassifier(
-        n_estimators=200,
-        min_samples_split=50,
-        random_state=42
+        X = df[FEATURES]
+        y = df[target]
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, shuffle=False, test_size=0.2
+        )
+
+        model = RandomForestClassifier(
+            n_estimators=200,
+            max_depth=6,
+            random_state=42
+        )
+
+        model.fit(X_train, y_train)
+
+        preds = model.predict(X_test)
+        precision = precision_score(y_test, preds)
+
+        expected_return = df.loc[y == 1, "Return"].mean()
+
+        models[horizon] = {
+            "model": model,
+            "precision": precision,
+            "expected_return": expected_return
+        }
+
+        print(f"{ticker} | {horizon} Precision: {precision:.2f}")
+
+    joblib.dump(
+        {
+            "models": models,
+            "features": FEATURES
+        },
+        f"models/{ticker}.joblib"
     )
 
-    model.fit(X_train, y_train)
-
-    preds = model.predict(X_test)
-    precision = precision_score(y_test, preds)
-
-    # Expected return calculation
-    test_returns = df.iloc[split:]["Return"].values
-    expected_return = test_returns[preds == 1].mean()
-
-    model_data = {
-        "model": model,
-        "features": features,
-        "expected_return": expected_return
-    }
-
-    joblib.dump(model_data, f"models/{ticker}.joblib")
-
-    print(f"{ticker} | Precision: {precision:.2f}")
-    print(f"{ticker} | Expected Return (UP days): {expected_return*100:.2f}%")
     print("-" * 40)
 
 if __name__ == "__main__":
-    tickers = ["AAPL", "MSFT", "GOOGL", "TSLA", "NVDA", "SPY"]
-
-
-    for ticker in tickers:
-        train_model(ticker)
+    tickers = sys.argv[1:] or ["SPY", "AAPL", "MSFT", "GOOGL", "TSLA"]
+    for t in tickers:
+        train_ticker(t)

@@ -1,60 +1,29 @@
-import os
 import joblib
-import numpy as np
+import os
 
-from data_loader import load_data
-from features import create_features
+def rank_tickers(tickers):
+    scores = []
 
-TICKERS = ["AAPL", "NVDA", "SPY", "QQQ"]
-
-def rank_stocks():
-    results = []
-
-    for ticker in TICKERS:
-        model_path = f"models/{ticker}.joblib"
-
-        if not os.path.exists(model_path):
-            print(f"Skipping {ticker} (no trained model)")
+    for ticker in tickers:
+        path = f"models/{ticker}.joblib"
+        if not os.path.exists(path):
             continue
 
-        model_data = joblib.load(model_path)
-        model = model_data["model"]
-        features = model_data["features"]
-        expected_return = model_data["expected_return"]
+        data = joblib.load(path)["models"]["1d"]
 
-        df = load_data(ticker)
-        df = create_features(df)
-
-        latest = df.iloc[-1:][features]
-
-        proba = model.predict_proba(latest)[0]
-        prediction = np.argmax(proba)
-        confidence = proba[prediction]
-
-        if prediction == 1:  # Only rank UP signals
-            score = confidence * expected_return
-            results.append({
-                "ticker": ticker,
-                "confidence": confidence,
-                "expected_return": expected_return,
-                "score": score
-            })
-
-    results = sorted(results, key=lambda x: x["score"], reverse=True)
-
-    print("\n📊 Ranked Stock Signals (Best → Worst)\n")
-
-    if not results:
-        print("No bullish signals today.")
-        return
-
-    for r in results:
-        print(
-            f"{r['ticker']:6} | "
-            f"Confidence: {r['confidence']*100:5.2f}% | "
-            f"Exp Return: {r['expected_return']*100:5.2f}% | "
-            f"Score: {r['score']*100:5.2f}"
+        score = (
+            data["precision"] * 0.6 +
+            data["expected_return"] * 10 * 0.4
         )
 
+        scores.append((ticker, score))
+
+    scores.sort(key=lambda x: x[1], reverse=True)
+
+    print("\n📊 Ranked Stock Signals (Best → Worst)\n")
+    for t, s in scores:
+        print(f"{t:<6} Score: {s:.3f}")
+
 if __name__ == "__main__":
-    rank_stocks()
+    tickers = ["AAPL", "MSFT", "GOOGL", "TSLA", "NVDA", "SPY", "QQQ"]
+    rank_tickers(tickers)
