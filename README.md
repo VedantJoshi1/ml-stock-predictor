@@ -1,15 +1,15 @@
-# 📈 ML Stock Signal & Ranking System
+#  ML Stock Signal & Ranking System
 
 A machine-learning–based stock **signal and ranking system** that predicts short-term stock direction, estimates expected returns, and ranks stocks by confidence and risk-adjusted strength.
 
 Built as a practical project to demonstrate **machine learning, feature engineering, and quantitative-style decision making** using real market data.
 
-> ⚠️ Disclaimer: This project is for educational and research purposes only.  
+>  Disclaimer: This project is for educational and research purposes only.  
 > It is **not financial advice**.
 
 ---
 
-## 🚀 What It Does
+##  What It Does
 
 For any stock ticker (e.g. AAPL, NVDA, SPY), the system:
 - Predicts **next-day direction** (UP / DOWN)
@@ -22,7 +22,7 @@ This mirrors how real quantitative systems generate **trade signals**, not price
 
 ---
 
-## 🧠 How It Works (High Level)
+##  How It Works (High Level)
 
 - Historical price data downloaded via Yahoo Finance
 - Features engineered from price action (returns, trends, volatility)
@@ -32,7 +32,7 @@ This mirrors how real quantitative systems generate **trade signals**, not price
 
 ---
 
-## ⚡ Quick Start (Terminal Commands)
+##  Quick Start (Terminal Commands)
 
 ```bash
 # Activate virtual environment (Windows)
