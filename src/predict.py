@@ -1,44 +1,33 @@
+# src/predict.py
 import sys
-import os
 import joblib
-import numpy as np
-
 from data_loader import load_data
 from features import create_features
-from train import train_ticker
 
-def predict(ticker):
-    model_path = f"models/{ticker}.joblib"
+def predict_signal(ticker):
+    model_data = joblib.load(f"models/{ticker}.joblib")
 
-    if not os.path.exists(model_path):
-        print(f"No model for {ticker}. Training now...")
-        train_ticker(ticker)
+    df = load_data(ticker, period="6mo")
+    df, _ = create_features(df)
 
-    model_data = joblib.load(model_path)
-    features = model_data["features"]
-    models = model_data["models"]
+    latest = df.iloc[-1:][model_data["features"]]
 
-    df = load_data(ticker)
-    df = create_features(df)
+    prob = model_data["model"].predict_proba(latest)[0][1]
+    direction = "UP" if prob >= 0.5 else "DOWN"
 
-    latest = df.iloc[-1:][features]
-
-    print(f"\n📊 {ticker} Predictions")
-
-    for horizon, data in models.items():
-        model = data["model"]
-        proba = model.predict_proba(latest)[0]
-        direction = np.argmax(proba)
-        confidence = proba[direction]
-
-        arrow = "📈 UP" if direction == 1 else "📉 DOWN"
-
-        print(
-            f"{horizon.upper():>4} | {arrow} | "
-            f"Confidence: {confidence*100:.2f}% | "
-            f"Expected Return (UP): {data['expected_return']*100:.2f}%"
-        )
+    return {
+        "ticker": ticker,
+        "direction": direction,
+        "confidence": prob,
+        "expected_return": model_data["expected_return"],
+        "score": prob * model_data["expected_return"]
+    }
 
 if __name__ == "__main__":
     ticker = sys.argv[1]
-    predict(ticker)
+    res = predict_signal(ticker)
+
+    print(f"\n{ticker} Prediction")
+    print(f"Direction: {res['direction']}")
+    print(f"Confidence: {res['confidence']:.2%}")
+    print(f"Expected Return: {res['expected_return']:.2%}")

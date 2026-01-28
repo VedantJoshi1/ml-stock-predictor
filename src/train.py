@@ -1,69 +1,37 @@
+# src/train.py
 import sys
 import joblib
-import numpy as np
-
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import precision_score
-
 from data_loader import load_data
 from features import create_features
 
-FEATURES = ["Return", "MA_5", "MA_20", "MA_50", "Volatility", "Bull_Regime"]
-
-def train_ticker(ticker):
+def train_model(ticker):
     print(f"Training model for {ticker}...")
 
     df = load_data(ticker)
-    df = create_features(df)
+    df, features = create_features(df)
 
-    models = {}
+    X = df[features]
+    y = df["Target"]
 
-    for horizon, target in {
-        "1d": "Target_1d",
-        "30d": "Target_30d",
-        "90d": "Target_90d",
-    }.items():
+    model = RandomForestClassifier(
+        n_estimators=200,
+        min_samples_split=50,
+        random_state=42
+    )
+    model.fit(X, y)
 
-        X = df[FEATURES]
-        y = df[target]
-
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, shuffle=False, test_size=0.2
-        )
-
-        model = RandomForestClassifier(
-            n_estimators=200,
-            max_depth=6,
-            random_state=42
-        )
-
-        model.fit(X_train, y_train)
-
-        preds = model.predict(X_test)
-        precision = precision_score(y_test, preds)
-
-        expected_return = df.loc[y == 1, "Return"].mean()
-
-        models[horizon] = {
-            "model": model,
-            "precision": precision,
-            "expected_return": expected_return
-        }
-
-        print(f"{ticker} | {horizon} Precision: {precision:.2f}")
+    expected_return = df.loc[df["Target"] == 1, "Return"].mean()
 
     joblib.dump(
         {
-            "models": models,
-            "features": FEATURES
+            "model": model,
+            "features": features,
+            "expected_return": expected_return
         },
         f"models/{ticker}.joblib"
     )
 
-    print("-" * 40)
-
 if __name__ == "__main__":
-    tickers = sys.argv[1:] or ["SPY", "AAPL", "MSFT", "GOOGL", "TSLA"]
-    for t in tickers:
-        train_ticker(t)
+    ticker = sys.argv[1] if len(sys.argv) > 1 else "SPY"
+    train_model(ticker)

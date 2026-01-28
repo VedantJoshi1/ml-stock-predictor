@@ -1,22 +1,21 @@
-import pandas as pd
+# src/features.py
 import numpy as np
 
 def create_features(df):
-    df["Return"] = df["Close"].pct_change()
+    df = df.copy()
 
-    df["MA_5"] = df["Close"].rolling(5).mean()
-    df["MA_20"] = df["Close"].rolling(20).mean()
-    df["MA_50"] = df["Close"].rolling(50).mean()
+    close = df["Close"]
 
-    df["Volatility"] = df["Return"].rolling(10).std()
+    df["Return"] = close.pct_change()
+    df["MA5"] = close.rolling(5).mean()
+    df["MA20"] = close.rolling(20).mean()
+    df["Volatility"] = df["Return"].rolling(5).std()
 
-    # Market regime (bull = 1, bear = 0)
-    df["Bull_Regime"] = (df["MA_20"] > df["MA_50"]).astype(int)
+    df["Tomorrow"] = close.shift(-1)
+    df["Target"] = (df["Tomorrow"] > close).astype(int)
 
-    # Targets
-    df["Target_1d"] = (df["Close"].shift(-1) > df["Close"]).astype(int)
-    df["Target_30d"] = (df["Close"].shift(-30) > df["Close"]).astype(int)
-    df["Target_90d"] = (df["Close"].shift(-90) > df["Close"]).astype(int)
+    df = df.dropna()
 
-    df.dropna(inplace=True)
-    return df
+    features = ["MA5", "MA20", "Volatility"]
+
+    return df, features
